@@ -84,6 +84,8 @@ Experimental Benchmarks
 
 .. include:: benchdesc/aspis-fe88.rst
 
+.. include:: benchdesc/aspis-pca-replica.rst
+
 .. include:: benchdesc/fng-blk.rst
 
 .. include:: benchdesc/fng-w.rst
@@ -91,6 +93,8 @@ Experimental Benchmarks
 .. include:: benchdesc/fng-sic.rst
 
 .. include:: benchdesc/fng-hcpb.rst
+
+.. include:: benchdesc/fng-ss.rst
 
 .. include:: benchdesc/tud-fe.rst
 

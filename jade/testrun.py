@@ -521,7 +521,13 @@ class Test:
         env_variables = config.mcnp_config
         inputstring = "i=" + name
         outputstring = "n=" + name
-        xsstring = "xs=" + lib_manager.data["mcnp"][self.lib].filename
+
+        if isinstance(self.lib, dict):
+            lib = list(self.lib.values())[0]
+        elif isinstance(self.lib, str):
+            lib = self.lib
+
+        xsstring = "xs=" + str(lib_manager.data["mcnp"][lib].filename)
 
         if run_mpi:
             run_command = [
