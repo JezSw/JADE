@@ -32,8 +32,8 @@ cp = os.path.dirname(os.path.abspath(__file__))
 root = os.path.dirname(cp)
 sys.path.insert(1, root)
 
-from jade.libmanager import LibManager
-from jade.matreader import Zaid
+from jadevv.libmanager import LibManager
+from jadevv.matreader import Zaid
 
 
 ACTIVATION_FILE = os.path.join(cp, 'TestFiles', 'libmanager',

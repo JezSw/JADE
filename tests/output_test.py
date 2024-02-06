@@ -28,8 +28,8 @@ cp = os.path.dirname(os.path.abspath(__file__))
 modules_path = os.path.dirname(cp)
 sys.path.insert(1, modules_path)
 
-from jade.libmanager import LibManager
-import jade.output as output
+from jadevv.libmanager import LibManager
+import jadevv.output as output
 
 
 # Files

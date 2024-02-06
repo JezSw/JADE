@@ -29,10 +29,10 @@ cp = os.path.dirname(os.path.abspath(__file__))
 root = os.path.dirname(cp)
 sys.path.insert(1, root)
 
-from jade.configuration import Log
-from jade.testrun import Test, SphereTest, SphereTestSDDR, FNGTest, MultipleTest
+from jadevv.configuration import Log
+from jadevv.testrun import Test, SphereTest, SphereTestSDDR, FNGTest, MultipleTest
 from tests.configuration_test import LOGFILE
-from jade.libmanager import LibManager
+from jadevv.libmanager import LibManager
 import pytest
 
 # Get a libmanager

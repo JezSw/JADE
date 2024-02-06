@@ -26,7 +26,7 @@ cp = os.path.dirname(os.path.abspath(__file__))
 modules_path = os.path.dirname(cp)
 sys.path.insert(1, modules_path)
 
-from jade.configuration import Configuration, Log
+from jadevv.configuration import Configuration, Log
 
 MAIN_CONFIG_FILE = os.path.join(cp, 'TestFiles', 'configuration',
                                 'mainconfig.xlsx')

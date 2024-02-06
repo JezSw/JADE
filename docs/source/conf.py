@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../jade'))
+sys.path.insert(0, os.path.abspath('../../jade_v_v'))
 
 from __version__ import __version__
 

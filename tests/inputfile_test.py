@@ -29,9 +29,9 @@ cp = os.path.dirname(os.path.abspath(__file__))
 root = os.path.dirname(cp)
 sys.path.insert(1, root)
 
-from jade.inputfile import (InputFile, D1S_Input, D1S5_InputFile)
-from jade.libmanager import LibManager
-from jade.parsersD1S import (IrradiationFile, ReactionFile)
+from jadevv.inputfile import (InputFile, D1S_Input, D1S5_InputFile)
+from jadevv.libmanager import LibManager
+from jadevv.parsersD1S import (IrradiationFile, ReactionFile)
 from copy import deepcopy
 import numpy as np
 import pytest

@@ -27,8 +27,8 @@ cp = os.path.dirname(os.path.abspath(__file__))
 root = os.path.dirname(cp)
 sys.path.insert(1, root)
 
-import jade.utilitiesgui as uty
-from jade.libmanager import LibManager
+import jadevv.utilitiesgui as uty
+from jadevv.libmanager import LibManager
 import shutil
 import pandas as pd
 import pytest

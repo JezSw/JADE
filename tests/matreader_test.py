@@ -33,8 +33,8 @@ sys.path.insert(1, modules_path)
 root = os.path.dirname(cp)
 sys.path.insert(1, root)
 
-from jade.matreader import (Element, Zaid, MatCardsList)
-from jade.libmanager import LibManager
+from jadevv.matreader import (Element, Zaid, MatCardsList)
+from jadevv.libmanager import LibManager
 import pytest
 import pandas as pd
 

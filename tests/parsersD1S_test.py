@@ -29,9 +29,9 @@ cp = os.path.dirname(os.path.abspath(__file__))
 root = os.path.dirname(cp)
 sys.path.insert(1, root)
 
-from jade.parsersD1S import (Reaction, ReactionFile, Irradiation,
+from jadevv.parsersD1S import (Reaction, ReactionFile, Irradiation,
                              IrradiationFile, REACFORMAT)
-from jade.libmanager import LibManager
+from jadevv.libmanager import LibManager
 
 
 INP = os.path.join(cp, 'TestFiles', 'parserD1S', 'reac_fe')
