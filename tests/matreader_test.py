@@ -29,18 +29,41 @@ cp = os.path.dirname(os.path.abspath(__file__))
 modules_path = os.path.dirname(cp)
 sys.path.insert(1, modules_path)
 
-from matreader import (Element, Zaid, MatCardsList)
-from libmanager import LibManager
+# TODO change this using the files and resources support in Python>10
+root = os.path.dirname(cp)
+sys.path.insert(1, root)
 
+from jadevv.matreader import (Element, Zaid, MatCardsList)
+from jadevv.libmanager import LibManager
+import pytest
+import pandas as pd
 
 # Files
 INP = os.path.join(cp, 'TestFiles', 'matreader', 'mat_test.i')
 INP2 = os.path.join(cp, 'TestFiles', 'matreader', 'mat_test2.i')
 ACTIVATION_INP = os.path.join(cp, 'TestFiles', 'matreader', 'activation.i')
 XSDIR = os.path.join(cp, 'TestFiles', 'matreader', 'xsdir_mcnp6.2')
-ISOTOPES_FILE = os.path.join(modules_path, 'Isotopes.txt')
 # Other
-LIBMAN = LibManager(XSDIR, defaultlib='81c', isotopes_file=ISOTOPES_FILE)
+ISOTOPES_FILE = os.path.join(root, 'jade', 'resources', 'Isotopes.txt')
+ACTIVATION_FILE = os.path.join(cp, 'TestFiles', 'libmanager',
+                               'Activation libs.xlsx')
+# XSDIR_FILE = os.path.join(cp, 'TestFiles', 'libmanager', 'xsdir')
+
+@pytest.fixture
+def LIBMAN():
+    df_rows = [
+                   ['99c', 'sda', '', XSDIR],
+                   ['98c', 'acsdc', '', XSDIR],
+                   ['21c', 'adsadsa', '', XSDIR],
+                   ['31c', 'adsadas', '', XSDIR],
+                   ['00c', 'sdas', '', XSDIR],
+                   ['71c', 'sdasxcx', '', XSDIR],
+                   ['81c', 'sdasxcx', 'yes', XSDIR]]
+    df_lib = pd.DataFrame(df_rows)
+    df_lib.columns = ['Suffix', 'Name', 'Default', 'MCNP']
+
+    return LibManager(df_lib, activationfile=ACTIVATION_FILE,
+                          isotopes_file=ISOTOPES_FILE)
 
 
 class TestZaid:
@@ -80,7 +103,7 @@ class TestElement:
         elem = Element(zaids)
         return elem
 
-    def test_update_zaidinfo(self):
+    def test_update_zaidinfo(self, LIBMAN):
         """
         Test ability to get additional info for the zaids
         """
@@ -108,7 +131,7 @@ class TestElement:
 
 
 class Testmaterial:
-    def test_switch_fraction(self):
+    def test_switch_fraction(self, LIBMAN):
         # Read a material
         matcard = MatCardsList.from_input(INP)
         # Fake translation in order to normalize the fractions
@@ -140,7 +163,7 @@ class Testmaterial:
         massnorm = material.to_text()
         assert massnorm == mass
 
-    def test_switch_pnnl(self):
+    def test_switch_pnnl(self, LIBMAN):
         # --- Test the PNNL with Bismuth Germanate (BGO) ---
         # read the material cards
         inp = os.path.join(cp, 'TestFiles', 'matreader', 'BGO_mass.i')
@@ -233,7 +256,7 @@ class TestMatCardList:
             for i, submat in enumerate(matcard[key].submaterials):
                 assert len(submat.zaidList) == zaids[i]
 
-    def test_translation(self):
+    def test_translation(self, LIBMAN):
         """
         Test that translation works (all possile modes)
         """
@@ -270,7 +293,7 @@ class TestMatCardList:
         translation = matcard.to_text()
         assert translation.count('21c') == 10
 
-    def test_get_info(self):
+    def test_get_info(self, LIBMAN):
         """
         Barely tests that everything is created
         """

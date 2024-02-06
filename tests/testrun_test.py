@@ -25,38 +25,55 @@ import pandas as pd
 from shutil import rmtree
 
 cp = os.path.dirname(os.path.abspath(__file__))
-modules_path = os.path.dirname(cp)
-sys.path.insert(1, modules_path)
+# TODO change this using the files and resources support in Python>10
+root = os.path.dirname(cp)
+sys.path.insert(1, root)
 
-from configuration import Log
-from testrun import Test, SphereTest, SphereTestSDDR, FNGTest, MultipleTest
+from jadevv.configuration import Log
+from jadevv.testrun import Test, SphereTest, SphereTestSDDR, FNGTest, MultipleTest
 from tests.configuration_test import LOGFILE
-from libmanager import LibManager
+from jadevv.libmanager import LibManager
+import pytest
 
 # Get a libmanager
 ACTIVATION_FILE = os.path.join(cp, 'TestFiles', 'libmanager',
                                'Activation libs.xlsx')
 XSDIR_FILE = os.path.join(cp, 'TestFiles', 'libmanager', 'xsdir')
-ISOTOPES_FILE = os.path.join(modules_path, 'Isotopes.txt')
-LM = LibManager(XSDIR_FILE, activationfile=ACTIVATION_FILE,
-                isotopes_file=ISOTOPES_FILE)
+ISOTOPES_FILE = os.path.join(root, 'jade', 'resources', 'Isotopes.txt')
 
 # Useful files
 FILES = os.path.join(cp, 'TestFiles', 'testrun')
 LOGFILE = Log('dummy.txt')
 
 
+@pytest.fixture
+def LM():
+    df_rows = [
+                   ['99c', 'sda', '', XSDIR_FILE],
+                   ['98c', 'acsdc', '', XSDIR_FILE],
+                   ['21c', 'adsadsa', '', XSDIR_FILE],
+                   ['31c', 'adsadas', '', XSDIR_FILE],
+                   ['00c', 'sdas', '', XSDIR_FILE],
+                   ['71c', 'sdasxcx', '', XSDIR_FILE],
+                   ['81c', 'sdasxcx', 'yes', XSDIR_FILE]]
+    df_lib = pd.DataFrame(df_rows)
+    df_lib.columns = ['Suffix', 'Name', 'Default', 'MCNP']
+
+    return LibManager(df_lib, activationfile=ACTIVATION_FILE,
+                            isotopes_file=ISOTOPES_FILE)
+
+
 class TestTest:
     files = os.path.join(FILES, 'Test')
     dummyout = os.path.join(FILES, 'dummy')
 
-    def test_build_normal(self):
+    def test_build_normal(self, LM):
         # Just check that nothing breaks
         lib = '81c'
         inp_name = 'ITER_1D.i'
         inp = os.path.join(self.files, inp_name)
         config_data = {'Description': 'dummy',
-                       'File Name': inp_name,
+                       'Folder Name': inp_name,
                        'OnlyInput': True,
                        'Run': False,
                        'Post-Processing': False,
@@ -64,7 +81,8 @@ class TestTest:
                        'CTME cut-off': 10,
                        'Relative Error cut-off': 'F1-0.1',
                        'Custom Input': 2,
-                       'Code': 'mcnp6'}
+                       'Code': 'mcnp6'
+                       }
         config = pd.Series(config_data)
         VRTpath = 'dummy'
         conf_path = 'dummy'
@@ -79,13 +97,13 @@ class TestTest:
 
         assert True
 
-    def test_build_d1s(self):
+    def test_build_d1s(self, LM):
         # Just check that nothing breaks
         lib = '99c-31c'
         inp_name = 'ITER_Cyl_SDDR.i'
         inp = os.path.join(self.files, inp_name)
         config_data = {'Description': 'dummy',
-                       'File Name': inp_name,
+                       'Folder Name': inp_name,
                        'OnlyInput': True,
                        'Run': False,
                        'Post-Processing': False,
@@ -112,7 +130,7 @@ class TestSphereTest:
     files = os.path.join(FILES, 'SphereTest')
     dummyout = os.path.join(FILES, 'dummy')
 
-    def test_build(self):
+    def test_build(self, LM):
         # Just check that nothing breaks
         lib = '31c'
         inp_name = 'Sphere.i'
@@ -145,7 +163,7 @@ class TestSphereTestSDDR:
     files = os.path.join(FILES, 'SphereTestSDDR')
     dummyout = os.path.join(FILES, 'dummy')
 
-    def test_build(self):
+    def test_build(self, LM):
         # Just check that nothing breaks
         lib = '99c-31c'
         inp_name = 'SphereSDDR.i'
@@ -178,13 +196,13 @@ class TestMultipleTest:
     files = os.path.join(FILES, 'MultipleTest')
     dummyout = os.path.join(FILES, 'dummy')
 
-    def test_build(self):
+    def test_build(self, LM):
         # Just check that nothing breaks
         lib = '31c'
         inp_folder = os.path.join(self.files, 'Inputs')
         inp_name = 'Oktavian'
         config_data = {'Description': 'dummy',
-                       'File Name': inp_name,
+                       'Folder Name': inp_name,
                        'OnlyInput': True,
                        'Run': False,
                        'Post-Processing': False,

@@ -29,8 +29,8 @@ cp = os.path.dirname(os.path.abspath(__file__))
 modules_path = os.path.dirname(cp)
 sys.path.insert(1, modules_path)
 
-from libmanager import LibManager
-import sphereoutput as sout
+from jadevv.libmanager import LibManager
+import jadevv.sphereoutput as sout
 
 
 # Files
