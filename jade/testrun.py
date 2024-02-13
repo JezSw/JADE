@@ -103,9 +103,6 @@ class Test:
 
         # Path variables
         self.run_dir = None
-        # self.serpent_dir = None
-        # self.openmc_dir = None
-        # self.d1s_dir = None
 
         config = config.dropna()
 
@@ -136,25 +133,13 @@ class Test:
         except KeyError:
             self.d1s = False
 
-        """
-        # Chek for valid code
-        code = config['Code']
-        if code not in CODE_TAGS.keys():
-            raise ValueError(code+' is not an admissible value for code.\n' +
-                             'Please double check the configuration file.')
-        else:
-            self.code = code  # transport code to be used for the benchmark
-        """
         # Generate input file template according to transport code
         if self.d1s:
-            d1s_ipt = os.path.join(inp, "d1s", self.name + ".i")
+            d1s_ipt = os.path.join(inp, "d1s",  os.path.basename(inp) + ".i")
             self.d1s_inp = ipt.D1S5_InputFile.from_text(d1s_ipt)
-            # It also have additional files then that must be in the
-            # VRT folder (irradiation and reaction files)
-            # To change with revised folder structure - removed VRT.
-            irrfile = os.path.join(VRTpath, self.d1s_inp.name, self.inp.name + "_irrad")
+            irrfile = os.path.join(inp, "d1s", os.path.basename(inp) + "_irrad")
             reacfile = os.path.join(
-                VRTpath, self.d1s_inp.name, self.d1s_inp.name + "_react"
+                inp, "d1s", os.path.basename(inp) + "_react"
             )
             try:
                 self.irrad = IrradiationFile.from_text(irrfile)
@@ -163,54 +148,17 @@ class Test:
                 self.log.adjourn(
                     "d1S irradition and reaction files not found, skipping..."
                 )
-                # For instance in sphere test they are not provided
-                # There may be reasons why these files are not provided, it is
-                # responsability of the user to make them available or not.
-                # self.irrad = None
-                # self.react = None
+            self.name = self.d1s_inp.name
         if self.mcnp:
             mcnp_ipt = os.path.join(inp, "mcnp", os.path.basename(inp) + ".i")
             self.mcnp_inp = ipt.InputFile.from_text(mcnp_ipt)
             self.name = self.mcnp_inp.name
-            # self.irrad = None
-            # self.react = None
         if self.serpent:
             serpent_ipt = os.path.join(inp, "serpent", os.path.basename(inp) + ".i")
             self.serpent_inp = ipt.SerpentInputFile.from_text(serpent_ipt)
         if self.openmc:
             openmc_ipt = os.path.join(inp, "openmc")
             self.openmc_inp = ipt.OpenMCInputFiles.from_path(openmc_ipt)
-
-        # Need to add this back if user only running MCNP
-        # Add the stop card according to config
-        """
-        config = config.dropna()
-        try:
-            nps = config['NPS cut-off']
-        except KeyError:
-            nps = None
-        if nps is np.nan:
-            nps = None
-        try:
-            ctme = config['CTME cut-off']
-        except KeyError:
-            ctme = None
-        if ctme is np.nan:
-            ctme = None
-        try:
-            tally = config['Relative Error cut-off'].split('-')[0]
-            error = config['Relative Error cut-off'].split('-')[1]
-            precision = (tally, error)
-        except KeyError:
-            precision = None
-
-        self.nps = nps
-        self.ctme = ctme
-        self.precision = precision
-
-        # Directory where the MCNP run will be performed
-        self.MCNPdir = None
-        """
 
     def _translate_input(self, lib, libmanager):
         """
@@ -236,7 +184,6 @@ class Test:
             add = self.d1s_inp.translate(
                 lib,
                 libmanager,
-                "d1s",
                 original_irradfile=self.irrad,
                 original_reacfile=self.react,
             )
@@ -277,8 +224,6 @@ class Test:
         self._translate_input(self.lib, libmanager)
 
         # Add stop card
-        # Need to retain adding ctme and precision for MCNP
-        # self.inp.add_stopCard(self.nps, self.ctme, self.precision)
         if self.d1s:
             self.d1s_inp.add_stopCard(self.nps)
         if self.mcnp:
@@ -301,25 +246,20 @@ class Test:
             shutil.rmtree(motherdir)
         os.mkdir(motherdir)
 
-        # edits_file = os.path.join(directoryVRT, 'inp_edits.txt')
-        # ww_file = os.path.join(directoryVRT, 'wwinp')
-        # if os.path.exists(directoryVRT):
-        #     # This was tested only for sphere... be careful
-        #     self.inp.add_edits(edits_file)  # Add variance reduction
-
         # Allow space for personalization getting additional modification
         self.custom_inp_modifications()
 
         if self.d1s:
-            os.mkdir(os.path.join(motherdir, "d1s"))
-            outinpfile = os.path.join(motherdir, "d1s", testname)
+            d1s_dir = os.path.join(motherdir, "d1s")
+            os.mkdir(d1s_dir)
+            outinpfile = os.path.join(d1s_dir, testname)
             self.d1s_inp.write(outinpfile)
             # And accessory files if needed
             if self.irrad is not None:
-                self.irrad.write(motherdir, "d1s")
+                self.irrad.write(d1s_dir)
             if self.react is not None:
-                self.react.write(motherdir, "d1s")
-            # Get VRT files if available
+                self.react.write(d1s_dir)
+            # Get WW files if available
             wwinp = os.path.join(self.original_inp, "d1s", "wwinp")
             if os.path.exists(wwinp):
                 outfile = os.path.join(motherdir, "d1s", "wwinp")
@@ -336,29 +276,12 @@ class Test:
                 shutil.copyfile(wwinp, outfile)
 
         if self.serpent:
-            # Impliment serpent outputfile generation here
+            # Implement serpent outputfile generation here
             pass
 
         if self.openmc:
-            # Impliment openmc outputfile generation here
+            # Implement openmc outputfile generation here
             pass
-
-        """
-        # Write new input file
-        outinpfile = os.path.join(motherdir, testname)
-        self.inp.write(outinpfile)
-        # And accessory files if needed
-        if self.irrad is not None:
-            self.irrad.write(motherdir)
-        if self.react is not None:
-            self.react.write(motherdir)
-
-        # Get VRT files if available
-        wwinp = os.path.join(self.path_VRT, testname, 'wwinp')
-        if os.path.exists(wwinp):
-            outfile = os.path.join(motherdir, 'wwinp')
-            shutil.copyfile(wwinp, outfile)
-        """
 
     def custom_inp_modifications(self):
         """
@@ -482,8 +405,118 @@ class Test:
             config.batch_system + " " + job_script, cwd=directory, shell=True
         )
 
-    def run_d1s(self, config, libmanager, name, directory):
-        pass
+    def run_d1s(
+        self,
+        config,
+        lib_manager,
+        name: str,
+        directory: Path,
+        runoption: str,
+        timeout=None,
+    ) -> bool:
+        """Run D1S simulation either on the command line or submitted as a job.
+
+        Parameters
+        ----------
+        config :
+            Configuration settings
+        lib_manager :
+            libmanager
+        name : str
+            Name of the simulation
+        directory : str, path
+            Directory where the simulation will be executed
+        runoption: str
+            Whether JADE run in parallel or command line
+        timeout : float, optional
+            Maximum time to wait for simulation of complete, by default None
+
+        Returns
+        -------
+        bool
+            Flag if simulation not run
+        """
+
+        # Calculate MPI tasks and OpenMP threads
+        mpi_tasks = int(config.openmp_threads) * int(config.mpi_tasks)
+        omp_threads = 1
+        run_mpi = False
+        if mpi_tasks > 1:
+            run_mpi = True
+
+        executable = config.d1s_exec
+        env_variables = config.d1s_config
+        inputstring = "i=" + name
+        outputstring = "n=" + name
+
+        #TODO change for D1S
+        if isinstance(self.lib, dict):
+            lib = list(self.lib.values())[0]
+        elif isinstance(self.lib, str):
+            lib = self.lib
+
+        xsstring = "xs=" + str(lib_manager.data["mcnp"][lib].filename)
+
+        if run_mpi:
+            run_command = [
+                "mpirun",
+                "-n",
+                str(mpi_tasks),
+                executable,
+                inputstring,
+                outputstring,
+                xsstring,
+            ]
+        else:
+            run_command = [executable, inputstring, outputstring, xsstring]
+
+        flagnotrun = False
+
+        try:
+            cwd = os.getcwd()
+            os.chdir(directory)
+            # cancel eventual previous output file
+            outputfile = name + ".o"
+            if os.path.exists(outputfile):
+                os.remove(outputfile)
+
+            # check if runtpe exists
+            runtpe = name + ".r"
+            if os.path.exists(runtpe):
+                command = command + " runtpe=" + name + ".r"
+
+            if runoption.lower() == "c":
+                try:
+                    if not sys.platform.startswith("win"):
+                        unix.configure(env_variables)
+                    print(" ".join(run_command))
+                    subprocess.run(
+                        " ".join(run_command), cwd=directory, shell=True, timeout=43200
+                    )
+
+                except subprocess.TimeoutExpired:
+                    print(
+                        "Sesion timed out after 12 hours. Consider submitting as a job."
+                    )
+                    flagnotrun = True
+
+            elif runoption.lower() == "s":
+                # Run MCNP as a job
+                cwd = os.getcwd()
+                os.chdir(directory)
+                self.job_submission(
+                    config,
+                    directory,
+                    run_command,
+                    mpi_tasks,
+                    omp_threads,
+                    env_variables,
+                )
+                os.chdir(cwd)
+        except subprocess.TimeoutExpired:
+            pass
+
+        return flagnotrun
 
     def run_mcnp(
         self,
@@ -832,7 +865,10 @@ class SphereTest(Test):
         zaids = libmanager.get_libzaids(lib, "mcnp")
 
         # testname = self.inp.name
-        testname = "Sphere"
+        if self.d1s:
+            testname = "SphereSDDR"
+        else:  
+            testname = "Sphere"
 
         motherdir = os.path.join(directory, testname)
         # If previous results are present they are canceled
@@ -875,41 +911,11 @@ class SphereTest(Test):
                 else:
                     nps = self.nps
 
-                # if self.ctme is None:
-                #    ctme = settings.loc[Z, 'CTME cut-off']
-                #    if ctme is np.nan:
-                #        ctme = None
-                # else:
-                #    ctme = self.ctme
-                #
-                # if self.precision is None:
-                #    prec = settings.loc[Z, 'Relative Error cut-off']
-                #    if prec is np.nan:
-                #        precision = None
-                #    else:
-                #        tally = prec.split('-')[0]
-                #        error = prec.split('-')[1]
-                #        precision = (tally, error)
-                # else:
-                #    precision = self.precision
-
             # Zaid local settings are prioritized
             else:
                 nps = settings.loc[Z, "NPS cut-off"]
                 if nps is np.nan:
                     nps = None
-
-                # ctme = settings.loc[Z, 'CTME cut-off']
-                # if ctme is np.nan:
-                #    ctme = None
-                #
-                # prec = settings.loc[Z, 'Relative Error cut-off']
-                # if prec is np.nan:
-                #    precision = None
-                # else:
-                #    tally = prec.split('-')[0]
-                #    error = prec.split('-')[1]
-                #    precision = (tally, error)
 
             self.generate_zaid_test(
                 zaid, libmanager, testname, motherdir, -1 * density, nps
@@ -925,9 +931,6 @@ class SphereTest(Test):
                 material, -1 * density, libmanager, testname, motherdir
             )
 
-    #    def generate_zaid_test(self, zaid, libmanager, testname, motherdir,
-    #                           density, nps, ctme, precision, addtag=None,
-    #                           parentlist=None, lib=None):
     def generate_zaid_test(
         self,
         zaid,
@@ -957,10 +960,6 @@ class SphereTest(Test):
             Density value for the sphere.
         nps : float
             number of particles cut-off
-        ctme : float
-            computer time cut-off
-        precision : float
-            precision cut-off
         addtag : str, optional
             add tag at the end of the single zaid test name. The default is
             None
@@ -978,10 +977,42 @@ class SphereTest(Test):
         # Adjourn the material cards for the zaid
         zaid = mat.Zaid(1, zaid[:-3], zaid[-3:], lib)
         name, formula = libmanager.get_zaidname(zaid)
-
         if self.d1s:
-            # Add d1s function here
-            pass
+            # Retrieve wwinp & other misc files if they exist
+            directoryVRT = os.path.join(
+                self.path_VRT, "d1s", zaid.element + zaid.isotope
+            )
+            edits_file = os.path.join(directoryVRT, "inp_edits.txt")
+            ww_file = os.path.join(directoryVRT, "wwinp")
+            # Create MCNP material card
+            submat = mat.SubMaterial("M1", [zaid], header="C " + name + " " + formula)
+            material = mat.Material([zaid], None, "M1", submaterials=[submat])
+            matlist = mat.MatCardsList([material])
+
+            # Generate the new input
+            newinp = deepcopy(self.d1s_inp)
+            newinp.matlist = matlist  # Assign material
+            # adjourn density
+            newinp.change_density(density)
+            # assign stop card
+            newinp.add_stopCard(nps)
+            # add PIKMT if requested
+            if parentlist is not None:
+                newinp.add_PIKMT_card(parentlist)
+
+            # Write new input file
+            outfile, outdir = self._get_zaidtestname(
+                testname, zaid, formula, addtag=addtag
+            )
+            outpath = os.path.join(motherdir, "d1s", outdir)
+            os.mkdir(outpath)
+            outinpfile = os.path.join(outpath, outfile)
+            newinp.write(outinpfile)
+
+            # Copy also wwinp file
+            if os.path.exists(directoryVRT):
+                outwwfile = os.path.join(outpath, "wwinp")
+                shutil.copyfile(ww_file, outwwfile)
 
         if self.mcnp:
             # Retrieve wwinp & other misc files if they exist
@@ -1001,14 +1032,7 @@ class SphereTest(Test):
             # adjourn density
             newinp.change_density(density)
             # assign stop card
-            newinp.add_stopCard(nps)  # , ctme, precision)
-            # add PIKMT if requested
-            if parentlist is not None:
-                newinp.add_PIKMT_card(parentlist)
-
-            #            if os.path.exists(directoryVRT):
-            #                newinp.add_edits(edits_file)  # Add variance reduction
-
+            newinp.add_stopCard(nps)
             # Write new input file
             outfile, outdir = self._get_zaidtestname(
                 testname, zaid, formula, addtag=addtag
@@ -1122,7 +1146,40 @@ class SphereTest(Test):
         truename = material.name
 
         if self.d1s:
-            # Add d1s function here
+            # Retrieve wwinp & other misc files if they exist
+            directoryVRT = os.path.join(self.path_VRT, "d1s", truename)
+            edits_file = os.path.join(directoryVRT, "inp_edits.txt")
+            ww_file = os.path.join(directoryVRT, "wwinp")
+            newmat = deepcopy(material)
+            # Translate and assign the material
+            newmat.translate(lib, libmanager, "mcnp")
+            newmat.header = material.header + "C\nC True name:" + truename
+            newmat.name = "M1"
+            matlist = mat.MatCardsList([newmat])
+
+            # Generate the new input
+            newinp = deepcopy(self.d1s_inp)
+            newinp.matlist = matlist  # Assign material
+            # adjourn density
+            newinp.change_density(density)
+            # add stop card
+            newinp.add_stopCard(self.nps) 
+            # Add PIKMT card if required
+            if parentlist is not None:
+                newinp.add_PIKMT_card(parentlist)
+
+            # Write new input file
+            outfile = testname + "_" + truename + "_"
+            outdir = testname + "_" + truename
+            outpath = os.path.join(motherdir, "d1s", outdir)
+            os.mkdir(outpath)
+            outinpfile = os.path.join(outpath, outfile)
+            newinp.write(outinpfile)
+
+            # Copy also wwinp file
+            if os.path.exists(directoryVRT):
+                outwwfile = os.path.join(outpath, "wwinp")
+                shutil.copyfile(ww_file, outwwfile)
             pass
 
         if self.mcnp:
@@ -1143,13 +1200,10 @@ class SphereTest(Test):
             # adjourn density
             newinp.change_density(density)
             # add stop card
-            newinp.add_stopCard(self.nps)  # , self.ctme, self.precision)
+            newinp.add_stopCard(self.nps)  
             # Add PIKMT card if required
             if parentlist is not None:
                 newinp.add_PIKMT_card(parentlist)
-
-            #            if os.path.exists(directoryVRT):
-            #                newinp.add_edits(edits_file)  # Add variance reduction
 
             # Write new input file
             outfile = testname + "_" + truename + "_"
@@ -1257,7 +1311,6 @@ class SphereTest(Test):
                     )
 
 
-# Fix from here
 class SphereTestSDDR(SphereTest):
     def __init__(self, *args, **keyargs):
         super().__init__(*args, **keyargs)
@@ -1272,7 +1325,7 @@ class SphereTestSDDR(SphereTest):
         )
 
     def generate_zaid_test(
-        self, zaid, libmanager, testname, motherdir, density, nps, ctme, precision
+        self, zaid, libmanager, testname, motherdir, density, nps
     ):
         """
         Generate input for a single zaid sphere SDDR benchmark run.
@@ -1293,10 +1346,6 @@ class SphereTestSDDR(SphereTest):
             Density value for the sphere.
         nps : float
             number of particles cut-off
-        ctme : float
-            computer time cut-off
-        precision : float
-            precision cut-off
 
         Returns
         -------
@@ -1318,8 +1367,6 @@ class SphereTestSDDR(SphereTest):
                 motherdir,
                 density,
                 nps,
-                ctme,
-                precision,
                 addtag=MT,
                 parentlist=[zaid],
                 lib=self.activationlib,
@@ -1503,7 +1550,7 @@ class SphereTestSDDR(SphereTest):
             print(
                 CORANGE
                 + """
- Warning: irradiations schedules were not find for all specified daughters.
+ Warning: irradiation schedules were not found for all specified daughters.
  """
                 + CEND
             )
@@ -1519,10 +1566,10 @@ class FNGTest(Test):
     def custom_inp_modifications(self):
         # Add the tracking for daughters in tally 14
         zaids = self.irrad.get_daughters()
-        self.inp.add_track_contribution("F14:p", zaids, who="daughter")
+        self.d1s_inp.add_track_contribution("F14:p", zaids, who="daughter")
         # Add the tracking for daughters in tally 24
         zaids = self.react.get_parents()
-        self.inp.add_track_contribution("F24:p", zaids, who="parent")
+        self.d1s_inp.add_track_contribution("F24:p", zaids, who="parent")
 
 
 class MultipleTest:
