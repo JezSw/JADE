@@ -111,7 +111,7 @@ def executeBenchmarksRoutines(session, lib: str, runoption, exp=False) -> None:
 
             # Handle dic string as lib
             pat_libs = re.compile(r'"\d\d[a-zA-Z]"')
-            if lib[0] == "{":
+            if len(lib)>0 and lib[0] == "{":
                 libs = pat_libs.findall(lib)
                 libpath = libs[1][1:-1]
             elif "-" in lib:

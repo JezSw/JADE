@@ -495,7 +495,7 @@ class LibManager:
             if lib in self.libraries[code]:
                 break
 
-            elif lib[0] == "{":
+            elif len(lib)>0 and lib[0] == "{":
                 libs = json.loads(lib)
                 # all libraries should be available
                 tocheck = list(libs.values())
