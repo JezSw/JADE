@@ -21,24 +21,28 @@
 # You should have received a copy of the GNU General Public License
 # along with JADE.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import jade.MCTAL_READER2 as mtal
-
 # import xlwings as xw
+from __future__ import annotations
 import pandas as pd
 import os
 import shutil
-import jade.plotter as plotter
-import jade.excelsupport as exsupp
 from tqdm import tqdm
-import jade.atlas as at
 import numpy as np
 import string
-from jade.outputFile import OutputFile
-from jade.meshtal import Meshtal
 import pickle
 import sys
 import abc
+from typing import TYPE_CHECKING
+
+import jade.atlas as at
+from jade.outputFile import OutputFile
+from jade.meshtal import Meshtal
+import jade.plotter as plotter
+import jade.excelsupport as exsupp
+import jade.MCTAL_READER2 as mtal
+
+if TYPE_CHECKING:
+    from jade.main import Session
 
 # RED color
 CRED = "\033[91m"
@@ -108,7 +112,7 @@ class AbstractOutput(abc.ABC):
 
 
 class BenchmarkOutput(AbstractOutput):
-    def __init__(self, lib, config, session):
+    def __init__(self, lib, config, session:Session):
         """
         General class for a Benchmark output
 
@@ -131,7 +135,7 @@ class BenchmarkOutput(AbstractOutput):
         self.raw_data = {}  # Raw data
         self.outputs = {}  # outputs linked to the benchmark
         self.testname = config["Folder Name"]  # test name
-        self.code_path = os.getcwd()  # path to code
+        self.code_path = session.code_root  # path to code
         self.state = session.state
         self.session = session
         self.path_templates = session.path_templates
